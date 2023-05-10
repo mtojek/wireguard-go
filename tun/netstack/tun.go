@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	mathrand "math/rand"
 	"net"
 	"net/netip"
 	"os"
@@ -70,6 +71,7 @@ func CreateNetTUN(localAddresses, dnsServers []netip.Addr, mtu int) (tun.Device,
 	if tcpipErr != nil {
 		return nil, nil, fmt.Errorf("could not enable TCP SACK: %v", tcpipErr)
 	}
+
 	dev.ep.AddNotify(dev)
 	tcpipErr = dev.stack.CreateNIC(1, dev.ep)
 	if tcpipErr != nil {
@@ -138,6 +140,10 @@ func (tun *netTun) Write(buf [][]byte, offset int) (int, error) {
 		packet := buf[offset:]
 		if len(packet) == 0 {
 			continue
+		}
+
+		if mathrand.Intn(100) > 98 {
+			return 0, os.ErrDeadlineExceeded
 		}
 
 		pkb := stack.NewPacketBuffer(stack.PacketBufferOptions{Payload: bufferv2.MakeWithData(packet)})
